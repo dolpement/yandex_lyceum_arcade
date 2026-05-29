@@ -135,7 +135,7 @@ class GameView(arcade.View):
             plat.center_y = y
             self.walls.append(plat)
 
-        for x in range(900, 1400, 64):
+        for x in range(830, 1400, 64):
             plat = arcade.Sprite(":resources:images/tiles/grassHalf.png", TILE_SCALING)
             plat.center_x = x
             plat.center_y = 350
@@ -294,7 +294,8 @@ class GameView(arcade.View):
             self.down = True
         elif key == arcade.key.SPACE:
             self.jump_pressed = True
-            self.jump_buffer_timer = JUMP_BUFFER
+            if self.player.change_y > 0:
+                self.player.change_y *= 0.7
         elif key == arcade.key.ESCAPE:
             from views import PauseView
             pause_view = PauseView(self)

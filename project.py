@@ -1,5 +1,6 @@
 import arcade 
 import random
+import os
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -22,7 +23,7 @@ HIGHSCORE_FILE = "highscore.txt"
 class Player(arcade.Sprite):
     def __init__(self):
         super().__init__(":resources:images/space_shooter/playerShip1_blue.png", PLAYER_SCALING)
-        self.centeer_x = SCREEN_WIDTH // 2
+        self.center_x = SCREEN_WIDTH // 2
         self.center_y = 50
         self.change_x = 0
 
@@ -32,7 +33,7 @@ class Item(arcade.Sprite):
         super().__init__(":resources:images/items/star.png", ITEM_SCALING)
         self.center_x = random.randint(20, SCREEN_WIDTH - 20)
         self.center_y = SCREEN_HEIGHT + 20
-        self.change_y = -ITEM_SCALING
+        self.change_y = -ITEM_SPEED
 
 
 class Enemy(arcade.Sprite):
@@ -40,12 +41,12 @@ class Enemy(arcade.Sprite):
         super().__init__(":resources:images/space_shooter/meteorGrey_big1.png", ENEMY_SCALING)
         self.center_x = random.randint(20, SCREEN_WIDTH - 20)
         self.center_y = SCREEN_HEIGHT + 20
-        self.change_y = -ENEMY_SCALING
+        self.change_y = -ENEMY_SPEED
 
 
 class StartView(arcade.View):
     def __init__(self):
-        super().__init__(":resources:images/space_shooter/meteorGrey_big1.png", ENEMY_SCALING)
+        super().__init__()
         self.backgroung = None
 
     def on_show(self):
@@ -97,7 +98,7 @@ class GameView(arcade.View):
         self.hit_sound = arcade.load_sound(":resources:sounds/hit2.wav")
 
     def on_draw(self):
-        self.cler()
+        self.clear()
         self.player_list.draw()
         self.item_list.draw()
         self.enemy_list.draw()
@@ -105,12 +106,6 @@ class GameView(arcade.View):
         arcade.draw_text(f"Score: {self.score}", 10, SCREEN_HEIGHT - 30, arcade.color.WHITE, 18)
 
     def on_update(self, delta_time):
-        self.player.center_x += self.player.change_x * delta_time
-        if self.player.center_x < 20:
-            self.player.center_x = 20
-        elif self.player.center_x > SCREEN_WIDTH - 20:
-            self.player.center_x = SCREEN_WIDTH - 20
-
         self.player.center_x += self.player.change_x * delta_time
         if self.player.center_x < 20:
             self.player.center_x = 20
@@ -162,6 +157,46 @@ class GameView(arcade.View):
         if key in (arcade.key.LEFT, arcade.key.A, arcade.key.RIGHT, arcade.key.D):
             self.player.change_x = 0
 
+
+class GameOverView(arcade.View):
+    def __init__(self, score):
+        super().__init__()
+        self.score = score
+        self.highscore = self.load_highscore()
+
+        if score > self.highscore:
+            self.highscore = score
+            self.save_highscore()
+
+    def load_highscore(self):
+        if os.path.exists(HIGHSCORE_FILE):
+            with open(HIGHSCORE_FILE, 'r') as f:
+                return int(f.read())
+        return 0
+    
+    def save_highscore(self):
+        with open(HIGHSCORE_FILE, 'w') as f:
+            f.write(str(self.highscore))
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.DARK_RED)
+    
+    def on_draw(self):
+        self.clear()
+        arcade.draw_text("GAME OVER", SCREEN_WIDTH // 2, SCREEN_HEIGHT - 150,
+                         arcade.color.WHITE, 48, anchor_x="center")
+        arcade.draw_text(f"Your score: {self.score}", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50,
+                         arcade.color.YELLOW, 32, anchor_x="center")
+        arcade.draw_text(f"Highscore: {self.highscore}", SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
+                         arcade.color.LIGHT_BLUE, 24, anchor_x="center")
+        arcade.draw_text("Press SPACE to play again", SCREEN_WIDTH // 2, 150,
+                         arcade.color.GREEN, 24, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.SPACE:
+            start_view = StartView()
+            self.window.show_view(start_view)
+    
 
 def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
